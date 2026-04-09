@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { BACKEND_URL } from "../api";
 
 /**
  * VideoRoom.jsx — Zoom/Meet-inspired 1-on-1 video interview room
@@ -416,9 +417,14 @@ export default function VideoRoom({ sessionId, role, participantName = "You", on
         createPC(stream);
 
         setStatus("Joining room…");
-        const proto = window.location.protocol === "https:" ? "wss" : "ws";
-        const host  = window.location.host;
-        const wsUrl = `${proto}://${host}/ws/room/${sessionId}?role=${role}`;
+        let wsUrl = "";
+        if (import.meta.env.VITE_BACKEND_URL) {
+            wsUrl = `${import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws")}/ws/room/${sessionId}?role=${role}`;
+        } else {
+            const proto = window.location.protocol === "https:" ? "wss" : "ws";
+            const host  = import.meta.env.DEV ? "localhost:8000" : window.location.host;
+            wsUrl = `${proto}://${host}/ws/room/${sessionId}?role=${role}`;
+        }
 
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
@@ -552,12 +558,12 @@ export default function VideoRoom({ sessionId, role, participantName = "You", on
           form.append("events_json", JSON.stringify(integrityEventsRef.current));
           form.append("eye_metrics_json", JSON.stringify({}));
 
-          const resp = await fetch("/analyze", { method: "POST", body: form });
+          const resp = await fetch(`${BACKEND_URL}/analyze`, { method: "POST", body: form });
           if (resp.ok) {
             const result = await resp.json();
             result.candidate_name = participantName;
 
-            await fetch(`/sessions/${sessionId}/result`, {
+            await fetch(`${BACKEND_URL}/sessions/${sessionId}/result`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(result),

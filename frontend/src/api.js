@@ -1,7 +1,9 @@
 import axios from "axios";
 
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? "" : "http://localhost:8000");
+
 const api = axios.create({
-    baseURL: import.meta.env.DEV ? "" : "http://localhost:8000",
+    baseURL: BACKEND_URL,
     timeout: 600000, // 10 minutes
 });
 
@@ -35,9 +37,15 @@ export async function healthCheck() {
  * @returns {WebSocket}
  */
 export function createWebSocket() {
-    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsHost = import.meta.env.DEV ? "localhost:8000" : window.location.host;
-    return new WebSocket(`${wsProtocol}://${wsHost}/ws`);
+    let wsUrl = "";
+    if (import.meta.env.VITE_BACKEND_URL) {
+        wsUrl = import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws");
+        return new WebSocket(`${wsUrl}/ws`);
+    } else {
+        const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsHost = import.meta.env.DEV ? "localhost:8000" : window.location.host;
+        return new WebSocket(`${wsProtocol}://${wsHost}/ws`);
+    }
 }
 
 /**

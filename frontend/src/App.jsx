@@ -14,7 +14,7 @@ import RiskReportCard from "./components/RiskReportCard";
 import HRDashboard from "./components/HRDashboard";
 import VideoRoom from "./components/VideoRoom";
 import CandidateEndScreen from "./components/CandidateEndScreen";
-import { uploadVideo } from "./api";
+import { uploadVideo, BACKEND_URL } from "./api";
 import html2pdf from "html2pdf.js";
 import ProfessionalReport from "./components/ProfessionalReport";
 
@@ -28,7 +28,7 @@ function BackendStatus() {
   useEffect(() => {
     let active = true;
     const check = () =>
-      fetch("/health")
+      fetch(`${BACKEND_URL}/health`)
         .then(() => { if (active) setStatus("online"); })
         .catch(() => { if (active) setStatus("offline"); });
     check();
@@ -113,7 +113,7 @@ export default function App() {
       setAssessmentType("interview");
       
       // Try to fetch candidate info from HR record
-      fetch(`/sessions/${sid}`).then(r => r.json()).then(data => {
+      fetch(`${BACKEND_URL}/sessions/${sid}`).then(r => r.json()).then(data => {
         if (data && data.candidate_name) {
           setCandidateInfo(data);
         }
@@ -328,7 +328,7 @@ export default function App() {
     setLiveUpdate(null);
     if (r && sessionIdRef.current) {
       try {
-        await fetch(`/sessions/${sessionIdRef.current}/result`, {
+        await fetch(`${BACKEND_URL}/sessions/${sessionIdRef.current}/result`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(r),

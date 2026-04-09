@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { BACKEND_URL } from "../api";
 import RiskReportCard from "./RiskReportCard";
 import ProfessionalReport from "./ProfessionalReport";
 import html2pdf from "html2pdf.js";
@@ -109,7 +110,7 @@ function CreateSessionModal({ onClose, onCreate }) {
     if (!name.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch("/sessions/create", {
+      const res = await fetch(`${BACKEND_URL}/sessions/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ candidate_name: name, role }),
@@ -222,7 +223,7 @@ export default function HRDashboard({ user, onLogout, onJoinMeeting }) {
   // Load sessions from backend
   const loadSessions = useCallback(async () => {
     try {
-      const res  = await fetch("/sessions");
+      const res  = await fetch(`${BACKEND_URL}/sessions`);
       const data = await res.json();
       setSessions(data.sessions || []);
     } catch {
