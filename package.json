@@ -1,0 +1,9 @@
+{
+    "name": "interview-integrity-analyzer-root",
+    "private": true,
+    "scripts": {
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd backend && venv\\Scripts\\activate && uvicorn main:app --reload --port 8000",
+        "dev": "npm run dev:frontend"
+    }
+}

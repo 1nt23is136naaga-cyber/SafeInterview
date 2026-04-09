@@ -1,0 +1,479 @@
+{
+  "sess_f1eb71bb84": {
+    "session_id": "sess_f1eb71bb84",
+    "candidate_name": "venkat",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T16:24:59.103950",
+    "status": "completed",
+    "live": false,
+    "risk_label": "GENUINE",
+    "final_score": 0.1975,
+    "result": {
+      "transcript": "Oh, that's really bad, I didn't care.",
+      "matched_question": "What is a database index and why is it important?",
+      "matched_phrases": [],
+      "all_scores": [
+        {
+          "question": "What is a database index and why is it important?",
+          "score": -0.0062,
+          "category": "technical"
+        },
+        {
+          "question": "Why do you want to work here?",
+          "score": -0.0426,
+          "category": "behavioral"
+        },
+        {
+          "question": "Tell me about yourself.",
+          "score": -0.0534,
+          "category": "introduction"
+        },
+        {
+          "question": "What are your strengths and weaknesses?",
+          "score": -0.0675,
+          "category": "behavioral"
+        },
+        {
+          "question": "Explain REST APIs.",
+          "score": -0.0771,
+          "category": "technical"
+        }
+      ],
+      "semantic_similarity": -0.0062,
+      "memorization_score": 0.5495,
+      "behavior_score": 0.35,
+      "eye_score": 0,
+      "final_score": 0.1975,
+      "risk_label": "GENUINE",
+      "confidence": 0.4,
+      "recommendation": "Proceed",
+      "verdict_summary": "No significant integrity concerns detected. The response contains natural hesitation, filler words, and personal examples consistent with genuine, spontaneous speech.",
+      "top_signals": [
+        {
+          "signal_name": "filler_ratio",
+          "human_label": "Near-zero filler words ('um', 'uh') \u2014 atypical for spontaneous speech",
+          "value": 0,
+          "threshold": 0.02,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        }
+      ],
+      "eye_explanations": [],
+      "eye_baseline_delta": {},
+      "speech_metrics": {
+        "speech_rate": 0.243,
+        "true_speech_rate": 0.243,
+        "pause_count": 3,
+        "pause_variance": 0.5,
+        "silence_ratio": 0,
+        "filler_count": 0,
+        "filler_ratio": 0,
+        "correction_count": 0,
+        "correction_rate": 0,
+        "word_count": 9,
+        "duration_seconds": 37,
+        "behavior_score": 0.35,
+        "pitch_variance": 0,
+        "energy_variance": 0
+      },
+      "linguistic_features": {
+        "structure_rigidity": 0,
+        "lexical_richness": 0.2205,
+        "personalization_score": 0.6,
+        "semantic_drift": 0.35,
+        "linearity_score": 0.65,
+        "redundancy_ratio": 0,
+        "sentence_count": 1,
+        "word_count": 7
+      },
+      "baseline_delta": {
+        "has_baseline": false,
+        "baseline_anomaly_score": 0
+      },
+      "integrity_events": [],
+      "timeline_events": [],
+      "verdict": "GENUINE",
+      "memorization_explanation": "The response shows some signs of preparation but also natural elements. Could be a well-practiced answer.",
+      "candidate_name": "venkat"
+    },
+    "completed_at": "2026-04-08T16:46:15.509258"
+  },
+  "sess_11822f8654": {
+    "session_id": "sess_11822f8654",
+    "candidate_name": "priya",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T17:12:26.338706",
+    "status": "completed",
+    "live": false,
+    "risk_label": "GENUINE",
+    "final_score": 0.1992,
+    "result": {
+      "transcript": "\u0414\u043e\u0431\u0440\u043e!",
+      "matched_question": "Why do you want to work here?",
+      "matched_phrases": [],
+      "all_scores": [
+        {
+          "question": "Why do you want to work here?",
+          "score": 0.0867,
+          "category": "behavioral"
+        },
+        {
+          "question": "What is recursion?",
+          "score": 0.0689,
+          "category": "technical"
+        },
+        {
+          "question": "What are your strengths and weaknesses?",
+          "score": 0.0591,
+          "category": "behavioral"
+        },
+        {
+          "question": "What is object-oriented programming?",
+          "score": 0.0338,
+          "category": "technical"
+        },
+        {
+          "question": "Tell me about yourself.",
+          "score": 0.0264,
+          "category": "introduction"
+        }
+      ],
+      "semantic_similarity": 0.0867,
+      "memorization_score": 0.5285,
+      "behavior_score": 0.35,
+      "eye_score": 0,
+      "final_score": 0.1992,
+      "risk_label": "GENUINE",
+      "confidence": 0.4,
+      "recommendation": "Proceed",
+      "verdict_summary": "No significant integrity concerns detected. The response contains natural hesitation, filler words, and personal examples consistent with genuine, spontaneous speech.",
+      "top_signals": [
+        {
+          "signal_name": "pause_variance",
+          "human_label": "Very low pause frequency (1.1/min) \u2014 unnaturally fluent delivery",
+          "value": 1.0526315789473684,
+          "threshold": 2,
+          "contribution": "HIGH",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "filler_ratio",
+          "human_label": "Near-zero filler words ('um', 'uh') \u2014 atypical for spontaneous speech",
+          "value": 0,
+          "threshold": 0.02,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "personalization_score",
+          "human_label": "Very few first-person examples or specific personal details",
+          "value": 0,
+          "threshold": 0.2,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        }
+      ],
+      "eye_explanations": [],
+      "eye_baseline_delta": {},
+      "speech_metrics": {
+        "speech_rate": 0.018,
+        "true_speech_rate": 0.018,
+        "pause_count": 1,
+        "pause_variance": 0.5,
+        "silence_ratio": 0,
+        "filler_count": 0,
+        "filler_ratio": 0,
+        "correction_count": 0,
+        "correction_rate": 0,
+        "word_count": 1,
+        "duration_seconds": 57,
+        "behavior_score": 0.35,
+        "pitch_variance": 0,
+        "energy_variance": 0
+      },
+      "linguistic_features": {
+        "structure_rigidity": 0,
+        "lexical_richness": 0,
+        "personalization_score": 0,
+        "semantic_drift": 0.5,
+        "linearity_score": 0.5,
+        "redundancy_ratio": 0,
+        "sentence_count": 0,
+        "word_count": 0
+      },
+      "baseline_delta": {
+        "has_baseline": false,
+        "baseline_anomaly_score": 0
+      },
+      "integrity_events": [],
+      "timeline_events": [],
+      "verdict": "GENUINE",
+      "memorization_explanation": "The response shows some signs of preparation but also natural elements. Could be a well-practiced answer.",
+      "candidate_name": "priya"
+    },
+    "completed_at": "2026-04-08T17:21:17.295757"
+  },
+  "sess_035d393530": {
+    "session_id": "sess_035d393530",
+    "candidate_name": "nn",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T17:23:13.869843",
+    "status": "completed",
+    "live": false,
+    "risk_label": "GENUINE",
+    "final_score": 0.2469,
+    "result": {
+      "transcript": "It's going to be a little bit more than it is, it's going to be a little bit more than it is. It's going to be a little bit more than it is.",
+      "matched_question": "Tell me about yourself.",
+      "matched_phrases": [],
+      "all_scores": [
+        {
+          "question": "Tell me about yourself.",
+          "score": 0.1155,
+          "category": "introduction"
+        },
+        {
+          "question": "What are your strengths and weaknesses?",
+          "score": 0.0612,
+          "category": "behavioral"
+        },
+        {
+          "question": "Why do you want to work here?",
+          "score": 0.054,
+          "category": "behavioral"
+        },
+        {
+          "question": "Describe your problem-solving approach.",
+          "score": 0.004,
+          "category": "behavioral"
+        },
+        {
+          "question": "What is recursion?",
+          "score": -0.0571,
+          "category": "technical"
+        }
+      ],
+      "semantic_similarity": 0.1155,
+      "memorization_score": 0.6713,
+      "behavior_score": 0.3561,
+      "eye_score": 0,
+      "final_score": 0.2469,
+      "risk_label": "GENUINE",
+      "confidence": 0.5,
+      "recommendation": "Proceed",
+      "verdict_summary": "No significant integrity concerns detected. The response contains natural hesitation, filler words, and personal examples consistent with genuine, spontaneous speech.",
+      "top_signals": [
+        {
+          "signal_name": "pause_variance",
+          "human_label": "Very low pause frequency (0.0/min) \u2014 unnaturally fluent delivery",
+          "value": 0,
+          "threshold": 2,
+          "contribution": "HIGH",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "filler_ratio",
+          "human_label": "Near-zero filler words ('um', 'uh') \u2014 atypical for spontaneous speech",
+          "value": 0,
+          "threshold": 0.02,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "personalization_score",
+          "human_label": "Very few first-person examples or specific personal details",
+          "value": 0,
+          "threshold": 0.2,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        }
+      ],
+      "eye_explanations": [],
+      "eye_baseline_delta": {},
+      "speech_metrics": {
+        "speech_rate": 1.565,
+        "true_speech_rate": 1.601,
+        "pause_count": 0,
+        "pause_variance": 0.5,
+        "silence_ratio": 0.0226,
+        "filler_count": 0,
+        "filler_ratio": 0,
+        "correction_count": 0,
+        "correction_rate": 0,
+        "word_count": 36,
+        "duration_seconds": 23,
+        "behavior_score": 0.3561,
+        "pitch_variance": 0,
+        "energy_variance": 0
+      },
+      "linguistic_features": {
+        "structure_rigidity": 0,
+        "lexical_richness": 0.1596,
+        "personalization_score": 0,
+        "semantic_drift": 0.35,
+        "linearity_score": 0.65,
+        "redundancy_ratio": 1,
+        "sentence_count": 2,
+        "word_count": 33
+      },
+      "baseline_delta": {
+        "has_baseline": false,
+        "baseline_anomaly_score": 0
+      },
+      "integrity_events": [],
+      "timeline_events": [],
+      "verdict": "GENUINE",
+      "memorization_explanation": "The response shows some signs of preparation but also natural elements. Could be a well-practiced answer.",
+      "candidate_name": "nn"
+    },
+    "completed_at": "2026-04-08T17:29:02.572536"
+  },
+  "sess_c777db5f0f": {
+    "session_id": "sess_c777db5f0f",
+    "candidate_name": "trial version",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T17:29:48.828321",
+    "status": "completed",
+    "live": false,
+    "risk_label": "GENUINE",
+    "final_score": 0.2259,
+    "result": {
+      "transcript": "which are growing problem in all the different ways. Identifying whether a candidate's response are genuine or assisted by it. Instead of just monitoring actions, they explain recording or tax switching. This system focuses on understanding behavior. It analyzes multiplicity such as these patterns, hesitations, structure, response time and interaction behavior. I am also integrating eye movement and assist to study attention patterns. One of the key innovations is that the system first runs a candidate's natural speaking style at the",
+      "matched_question": "Describe your problem-solving approach.",
+      "matched_phrases": [],
+      "all_scores": [
+        {
+          "question": "Describe your problem-solving approach.",
+          "score": 0.2008,
+          "category": "behavioral"
+        },
+        {
+          "question": "What are your strengths and weaknesses?",
+          "score": 0.1692,
+          "category": "behavioral"
+        },
+        {
+          "question": "Why do you want to work here?",
+          "score": 0.1327,
+          "category": "behavioral"
+        },
+        {
+          "question": "What is recursion?",
+          "score": 0.104,
+          "category": "technical"
+        },
+        {
+          "question": "What is object-oriented programming?",
+          "score": 0.0844,
+          "category": "technical"
+        }
+      ],
+      "semantic_similarity": 0.2008,
+      "memorization_score": 0.7889,
+      "behavior_score": 0.2644,
+      "eye_score": 0,
+      "final_score": 0.2259,
+      "risk_label": "GENUINE",
+      "confidence": 0.5,
+      "recommendation": "Proceed",
+      "verdict_summary": "No significant integrity concerns detected. The response contains natural hesitation, filler words, and personal examples consistent with genuine, spontaneous speech.",
+      "top_signals": [
+        {
+          "signal_name": "pause_variance",
+          "human_label": "Very low pause frequency (0.0/min) \u2014 unnaturally fluent delivery",
+          "value": 0,
+          "threshold": 2,
+          "contribution": "HIGH",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "filler_ratio",
+          "human_label": "Near-zero filler words ('um', 'uh') \u2014 atypical for spontaneous speech",
+          "value": 0,
+          "threshold": 0.02,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        },
+        {
+          "signal_name": "personalization_score",
+          "human_label": "Very few first-person examples or specific personal details",
+          "value": 0.1481,
+          "threshold": 0.2,
+          "contribution": "MEDIUM",
+          "direction": "\u2193 below normal"
+        }
+      ],
+      "eye_explanations": [],
+      "eye_baseline_delta": {},
+      "speech_metrics": {
+        "speech_rate": 1.482,
+        "true_speech_rate": 2.573,
+        "pause_count": 0,
+        "pause_variance": 0.5,
+        "silence_ratio": 0.4239,
+        "filler_count": 0,
+        "filler_ratio": 0,
+        "correction_count": 0,
+        "correction_rate": 0,
+        "word_count": 83,
+        "duration_seconds": 56,
+        "behavior_score": 0.2644,
+        "pitch_variance": 0,
+        "energy_variance": 0
+      },
+      "linguistic_features": {
+        "structure_rigidity": 0,
+        "lexical_richness": 0.6204,
+        "personalization_score": 0.1481,
+        "semantic_drift": 0.1734,
+        "linearity_score": 0.133,
+        "redundancy_ratio": 0,
+        "sentence_count": 7,
+        "word_count": 81
+      },
+      "baseline_delta": {
+        "has_baseline": false,
+        "baseline_anomaly_score": 0
+      },
+      "integrity_events": [],
+      "timeline_events": [],
+      "verdict": "GENUINE",
+      "memorization_explanation": "The response appears highly structured with perfect grammar and no hesitation markers \u2014 typical of a memorized answer.",
+      "candidate_name": "trial version"
+    },
+    "completed_at": "2026-04-08T17:33:29.197304"
+  },
+  "sess_231abdd283": {
+    "session_id": "sess_231abdd283",
+    "candidate_name": " v v",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T17:35:00.689605",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  },
+  "sess_b53eb1eac6": {
+    "session_id": "sess_b53eb1eac6",
+    "candidate_name": "asdfv",
+    "role": "Software Engineer",
+    "created_at": "2026-04-08T17:35:39.448157",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  },
+  "sess_745b7b8934": {
+    "session_id": "sess_745b7b8934",
+    "candidate_name": "Alice Test",
+    "role": "Software EngineerQA Engineer",
+    "created_at": "2026-04-08T18:17:23.926730",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  }
+}
