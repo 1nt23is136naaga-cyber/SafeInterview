@@ -12,7 +12,8 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from database import ANSWER_BANK
+# We will now load the bank dynamically from Supabase
+_CURRENT_BANK = []
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +29,24 @@ def _get_model() -> SentenceTransformer:
 
 @lru_cache(maxsize=1)
 def _get_answer_embeddings():
-    """Pre-compute embeddings for all answers in the bank."""
+    """Pre-compute embeddings for the current bank."""
+    if not _CURRENT_BANK:
+        logger.warning("Embeddings requested but bank is empty. Call sync_bank_db() first.")
+        return np.array([])
     model = _get_model()
-    texts = [entry["answer"] for entry in ANSWER_BANK]
-    logger.info("Pre-computing embeddings for %d reference answers.", len(texts))
+    texts = [entry["answer"] for entry in _CURRENT_BANK]
+    logger.info("Pre-computing embeddings for %d reference answers from cloud bank.", len(texts))
     return model.encode(texts, normalize_embeddings=True)
+
+async def sync_bank_db():
+    """Fetch the latest question bank from Supabase and refresh embeddings."""
+    global _CURRENT_BANK
+    from supabase_client import get_questions_db
+    _CURRENT_BANK = await get_questions_db()
+    _get_answer_embeddings.cache_clear()
+    _get_answer_embeddings()
+    logger.info("Question bank synced and embeddings refreshed.")
+
 
 
 def compute_similarity(transcript: str) -> dict:
@@ -71,15 +85,15 @@ def compute_similarity(transcript: str) -> dict:
 
     all_scores = [
         {
-            "question": ANSWER_BANK[i]["question"],
+            "question": _CURRENT_BANK[i]["question"],
             "score": round(float(similarities[i]), 4),
-            "category": ANSWER_BANK[i]["category"],
+            "category": _CURRENT_BANK[i].get("category", "technical"),
         }
-        for i in range(len(ANSWER_BANK))
+        for i in range(len(_CURRENT_BANK))
     ]
     all_scores.sort(key=lambda x: x["score"], reverse=True)
 
-    matched_entry = ANSWER_BANK[best_idx]
+    matched_entry = _CURRENT_BANK[best_idx]
     matched_phrases = _extract_matched_phrases(transcript, matched_entry["answer"])
 
     return {

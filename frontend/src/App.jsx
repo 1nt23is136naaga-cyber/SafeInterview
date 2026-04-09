@@ -32,11 +32,18 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [metrics, setMetrics] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [baselineProgress, setBaselineProgress] = useState(0);
   
   // Media references
   const audioStreamRef = useRef(null);
   const recorderRef = useRef(null);
   const wsRef = useRef(null);
+
+  const notify = (msg, type = "success") => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
 
   // Stop everything
   const stopAll = () => {
@@ -101,6 +108,7 @@ export default function App() {
 
     recorder.onstop = async () => {
       setIsRecording(false);
+      setBaselineProgress(0);
       const blob = new Blob(chunks, { type: "audio/webm" });
       const base64data = await new Promise(r => {
         const reader = new FileReader();
@@ -118,21 +126,32 @@ export default function App() {
             question_index: 0
           })
         });
-        alert("Baseline captured successfully! You can now start live monitoring.");
+        notify("Vocal signature captured! You're ready to start.", "success");
       } catch (err) {
         console.error(err);
-        alert("Failed to save baseline: " + err.message);
+        notify("Failed to save baseline: " + err.message, "error");
       }
     };
 
     recorder.start();
+    
+    // Animate progress
+    const duration = 30000;
+    const interval = 100;
+    let elapsed = 0;
+    const progressTimer = setInterval(() => {
+      elapsed += interval;
+      setBaselineProgress(Math.min((elapsed / duration) * 100, 100));
+      if (elapsed >= duration) clearInterval(progressTimer);
+    }, interval);
+
     // Auto-stop baseline after 30 seconds
     setTimeout(() => {
       if (recorder.state !== "inactive") {
         recorder.stop();
       }
       setPhase("idle");
-    }, 30000);
+    }, duration);
   };
 
   const startLiveMonitor = async () => {
@@ -200,6 +219,16 @@ export default function App() {
         <BackendStatus />
       </div>
 
+      {notification && (
+        <div className={`mb-4 p-3 rounded-xl text-sm font-medium animate-in slide-in-from-top duration-300 border ${
+          notification.type === "success" 
+            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+            : "bg-red-500/10 border-red-500/20 text-red-400"
+        }`}>
+          {notification.msg}
+        </div>
+      )}
+
       <div className="space-y-6">
         <div className="bg-gray-800/40 p-5 rounded-2xl border border-white/5">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
@@ -209,16 +238,26 @@ export default function App() {
           <p className="text-sm text-gray-400 mb-4">
             Ask the candidate to introduce themselves. This captures their natural vocal signature (pitch, speed, pauses).
           </p>
+          
+          {isBaseline && (
+            <div className="mb-4 bg-gray-900 h-2 rounded-full overflow-hidden border border-white/5">
+              <div 
+                className="h-full bg-indigo-500 transition-all duration-100 ease-linear shadow-[0_0_10px_rgba(99,102,241,0.5)]" 
+                style={{ width: `${baselineProgress}%` }}
+              />
+            </div>
+          )}
+
           <button
             onClick={isBaseline ? stopAll : startBaseline}
             disabled={isMonitor}
-            className={`w-full py-3 rounded-xl font-bold transition-all ${
+            className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${
               isBaseline 
-                ? "bg-red-500/20 text-red-500 hover:bg-red-500/30 border border-red-500/50" 
-                : "bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
+                ? "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50" 
+                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white disabled:opacity-50"
             }`}
           >
-            {isBaseline ? "Stop Recording (Auto-stops after 30s)..." : "Start Baseline Capture"}
+            {isBaseline ? "Interupt Signature Capture" : "Start Baseline Capture"}
           </button>
         </div>
 
@@ -248,6 +287,21 @@ export default function App() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Live Analysis</h3>
             
             <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-900 p-4 rounded-xl border border-white/5 shadow-inner">
+                <span className="text-xs text-gray-500 block mb-1">Speaker Identity</span>
+                <span className={`text-xl font-bold ${
+                    metrics.behavior_delta > 30 ? "text-red-400" : "text-emerald-400"
+                  }`}>
+                  {metrics.behavior_delta > 30 ? "False Positive" : "Legit"}
+                </span>
+                <div className="mt-2 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ${metrics.behavior_delta > 30 ? "bg-red-500" : "bg-emerald-500"}`} 
+                    style={{ width: `${Math.min(metrics.behavior_delta * 2, 100)}%` }}
+                  />
+                </div>
+              </div>
+              
               <div className="bg-gray-900 p-4 rounded-xl border border-white/5">
                 <span className="text-xs text-gray-500 block mb-1">Plagiarism Risk</span>
                 <span className={`text-xl font-bold ${
@@ -258,32 +312,13 @@ export default function App() {
                 </span>
                 <span className="text-xs text-gray-600 ml-2">{(metrics.semantic_similarity * 100).toFixed(0)}% Match</span>
               </div>
-              
-              <div className="bg-gray-900 p-4 rounded-xl border border-white/5">
-                <span className="text-xs text-gray-500 block mb-1">Speaker Identity</span>
-                {metrics.baseline_delta ? (
-                  <span className={`text-xl font-bold ${
-                    metrics.baseline_delta.baseline_anomaly_score > 0.6 ? "text-red-400" : "text-emerald-400"
-                  }`}>
-                    {metrics.baseline_delta.baseline_anomaly_score > 0.6 ? "False Positive" : "Legit"}
-                  </span>
-                ) : (
-                  <span className="text-sm text-gray-400">Waiting for data...</span>
-                )}
-              </div>
             </div>
 
-            {metrics.baseline_delta && metrics.baseline_delta.baseline_anomaly_score > 0.6 && (
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-sm text-red-300">
+            {/* Baseline Delta Details */}
+            {metrics.behavior_delta > 30 && (
+              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-sm text-red-300 mt-4">
                 <strong className="block mb-1">Voice deviates from baseline:</strong>
-                <ul className="list-disc pl-4 text-xs space-y-1">
-                  {Math.abs(metrics.baseline_delta.speech_rate_delta) > 0.5 && 
-                    <li>Speech rate changed by {metrics.baseline_delta.speech_rate_delta > 0 ? "faster" : "slower"} rhythm.</li>}
-                  {metrics.baseline_delta.silence_ratio_delta < -0.1 && 
-                    <li>Less silence (reading from script).</li>}
-                  {metrics.baseline_delta.filler_ratio_delta < -0.05 && 
-                    <li>Fewer filler words than natural speech.</li>}
-                </ul>
+                <p className="text-xs">Behavioral pattern mismatch detected ({metrics.behavior_delta.toFixed(1)}%). Possible scripted reading or third-party interference.</p>
               </div>
             )}
 

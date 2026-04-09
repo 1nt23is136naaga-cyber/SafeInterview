@@ -45,3 +45,40 @@ async def load_sessions_db():
     except Exception as e:
         logger.error(f"Error loading sessions from Supabase: {e}")
         return {}
+
+async def get_questions_db():
+    """Fetch all interview questions from Supabase 'questions' table."""
+    if not supabase:
+        from database import ANSWER_BANK
+        return ANSWER_BANK
+    try:
+        response = supabase.table("questions").select("*").execute()
+        if response.data:
+            return response.data
+        else:
+            from database import ANSWER_BANK
+            return ANSWER_BANK
+    except Exception as e:
+        logger.error(f"Error fetching questions from Supabase: {e}")
+        from database import ANSWER_BANK
+        return ANSWER_BANK
+
+async def seed_questions_db(questions: list):
+    """Batch insert questions into Supabase."""
+    if not supabase:
+        return
+    try:
+        # Filter for required columns
+        formatted = []
+        for q in questions:
+            formatted.append({
+                "question": q["question"],
+                "answer": q["answer"],
+                "category": q.get("category", "technical")
+            })
+        response = supabase.table("questions").upsert(formatted, on_conflict="question").execute()
+        logger.info(f"Seeded {len(formatted)} questions to Supabase.")
+        return response
+    except Exception as e:
+        logger.error(f"Error seeding questions: {e}")
+

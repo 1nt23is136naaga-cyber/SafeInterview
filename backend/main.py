@@ -97,7 +97,17 @@ async def _save_session_async(session_id: str):
 async def lifespan(app: FastAPI):
     # Load persisted sessions before warming models
     await _load_sessions_async()
-    logger.info("Warming up models…")
+    
+    logger.info("Warming up models & syncing cloud bank…")
+    
+    # 1. Sync question bank from Supabase
+    from embeddings import sync_bank_db
+    try:
+        await sync_bank_db()
+    except Exception as e:
+        logger.error(f"Initial cloud bank sync failed: {e}")
+
+    # 2. Warm up other models
     loop = asyncio.get_event_loop()
     await asyncio.gather(
         loop.run_in_executor(None, _warm_stt),
