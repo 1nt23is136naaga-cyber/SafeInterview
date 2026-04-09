@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "SafeInterview GMeet Plugin",
+  "version": "2.0.0",
+  "description": "Voice analysis and plagiarism detection for Google Meet interviews.",
+  "permissions": ["sidePanel"],
+  "host_permissions": [
+    "*://meet.google.com/*"
+  ],
+  "action": {
+    "default_title": "Open SafeInterview"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  }
+}

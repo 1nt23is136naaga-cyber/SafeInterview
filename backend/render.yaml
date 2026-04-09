@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: safeinterview-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PUBLIC_MODE
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "http://localhost:5173" # Update this in Render Dashboard to your Vercel URL
+      - key: OPENAI_API_KEY
+        sync: false

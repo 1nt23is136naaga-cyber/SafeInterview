@@ -115,13 +115,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — open in public mode, restricted in local mode
+# CORS — restricted in local mode, configured in production via env 
 _public_mode = os.getenv("PUBLIC_MODE", "false").lower() == "true"
-origins = ["*"] if _public_mode else [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")]
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+origins = ["*"] if _public_mode else [o.strip() for o in _cors_origins.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=not _public_mode,   # credentials + wildcard not allowed together
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -153,23 +155,6 @@ class BaselineResponse(BaseModel):
     status: str
 
 
-class ResumeUploadResponse(BaseModel):
-    resume_text: str
-    questions: list[str]
-
-
-class ResumeVerifyRequest(BaseModel):
-    audio_base64: str
-    question: str
-    resume_text: str
-
-
-class ResumeVerifyResponse(BaseModel):
-    transcript: str
-    legitimacy_score: float
-    verdict: str
-    explanation: str
-
 
 # ---------------------------------------------------------------------------
 # Core analysis pipeline
@@ -180,7 +165,6 @@ async def _full_analysis(
     duration: float | None = None,
     events: list = None,
     session_id: str = "",
-    eye_metrics_raw: dict = None,
 ) -> dict:
     """
     Full multimodal pipeline: STT → semantics → LLM → behavior →
@@ -192,8 +176,6 @@ async def _full_analysis(
     from llm import evaluate_response
     from linguistics import extract_linguistic_features
     from baseline import compute_baseline_delta, BaselineProfile, BaselineDelta
-    from report import build_risk_report
-    from eye_tracking import compute_eye_behavior_score, parse_eye_event, EyeMetricsSummary
     from embeddings import _get_model as get_embed_model
 
     if events is None:
@@ -201,7 +183,7 @@ async def _full_analysis(
 
     loop = asyncio.get_event_loop()
 
-    # 1 ── Transcribe ──────────────────────────────────────────────────────
+    # 1 ── Transcribe
     stt_result = await loop.run_in_executor(None, transcribe_bytes, audio_bytes)
     transcript = stt_result["transcript"]
     audio_duration = duration or stt_result.get("duration", 30.0)
@@ -209,13 +191,13 @@ async def _full_analysis(
     if not transcript.strip():
         raise ValueError("Could not transcribe audio. Please check audio quality.")
 
-    # 2 ── Semantic similarity ─────────────────────────────────────────────
+    # 2 ── Semantic similarity
     sim_result = await loop.run_in_executor(None, compute_similarity, transcript)
 
-    # 3 ── LLM evaluation ────────────────────────────────────────────────
+    # 3 ── LLM evaluation
     llm_result = await evaluate_response(transcript, sim_result["matched_question"])
 
-    # 4 ── Behavioral analysis ─────────────────────────────────────────────
+    # 4 ── Behavioral analysis
     behavior_result = await loop.run_in_executor(
         None,
         analyze_behavior,
@@ -223,30 +205,16 @@ async def _full_analysis(
         audio_duration,
         stt_result.get("segments"),
         events,
-        audio_bytes,          # pass raw bytes for acoustic analysis
+        audio_bytes,
     )
 
-    # 5 ── Linguistic features ─────────────────────────────────────────────
+    # 5 ── Linguistic features
     embed_model = await loop.run_in_executor(None, get_embed_model)
     linguistic_features = await loop.run_in_executor(
         None, extract_linguistic_features, transcript, embed_model
     )
 
-    # 6 ── Eye behavior ───────────────────────────────────────────────────
-    eye_score_obj = None
-    eye_score = 0.0
-    eye_explanations: list[str] = []
-    if eye_metrics_raw:
-        try:
-            eye_summary = parse_eye_event(eye_metrics_raw)
-            eye_score_obj = compute_eye_behavior_score(eye_summary)
-            if eye_score_obj.reliable:
-                eye_score = eye_score_obj.eye_score
-                eye_explanations = eye_score_obj.human_explanation
-        except Exception as exc:
-            logger.warning("Eye tracking scoring failed: %s", exc)
-
-    # 7 ── Baseline delta ─────────────────────────────────────────────────
+    # 7 ── Baseline delta
     baseline_delta: dict = {"has_baseline": False, "baseline_anomaly_score": 0.0}
     if session_id and session_id in _baseline_store:
         stored = _baseline_store[session_id]
@@ -254,33 +222,6 @@ async def _full_analysis(
         from baseline import compute_baseline_delta as cbd
         delta_obj = cbd(bp, linguistic_features, behavior_result)
         baseline_delta = asdict(delta_obj)
-    
-    # Eye baseline delta
-    eye_baseline_delta: dict = {}
-    if session_id and session_id in _eye_baseline_store and eye_score_obj:
-        b_eye = _eye_baseline_store[session_id]
-        eye_baseline_delta = _compute_eye_delta(b_eye, eye_metrics_raw or {})
-
-    # 8 ── Build Risk Report ───────────────────────────────────────────────
-    # Eye contributes 10% to the total risk (non-dominant but informative)
-    eye_contribution = eye_score * 0.10
-
-    report = build_risk_report(
-        transcript=          transcript,
-        semantic_similarity= sim_result["semantic_similarity"],
-        memorization_score=  llm_result["memorization_score"],
-        memorization_explanation=llm_result["explanation"],
-        speech_metrics=      behavior_result,
-        linguistic_features= linguistic_features,
-        baseline_delta=      baseline_delta,
-        integrity_events=    events,
-        matched_question=    sim_result["matched_question"],
-        matched_phrases=     sim_result["matched_phrases"],
-        all_scores=          sim_result["all_scores"],
-    )
-
-    # Blend eye score into final
-    final_risk = round(min(report.risk_score + eye_contribution, 1.0), 4)
 
     return {
         # Core identifiers
@@ -288,41 +229,15 @@ async def _full_analysis(
         "matched_question":     sim_result["matched_question"],
         "matched_phrases":      sim_result["matched_phrases"],
         "all_scores":           sim_result["all_scores"],
-        # Sub-scores (for gauges)
-        "semantic_similarity":  report.semantic_similarity,
-        "memorization_score":   report.memorization_score,
-        "behavior_score":       report.behavior_score,
-        "eye_score":            eye_score,
-        # Computed totals
-        "final_score":          final_risk,
-        "risk_label":           report.risk_label,
-        "confidence":           report.confidence,
-        "recommendation":       report.recommendation,
-        # Explainability
-        "verdict_summary":      report.verdict_summary,
-        "top_signals":          [asdict(s) for s in report.top_signals],
-        "eye_explanations":     eye_explanations,
-        "eye_baseline_delta":   eye_baseline_delta,
+        # Sub-scores
+        "semantic_similarity":  sim_result["semantic_similarity"],
+        "memorization_score":   llm_result["memorization_score"],
+        "behavior_score":       behavior_result["behavior_score"],
         # Raw metrics
         "speech_metrics":       behavior_result,
         "linguistic_features":  linguistic_features,
         "baseline_delta":       baseline_delta,
-        # Events
         "integrity_events":     events,
-        "timeline_events":      report.timeline_events,
-        # Legacy fields for existing UI compatibility
-        "verdict":              report.risk_label,
-        "memorization_explanation": llm_result["explanation"],
-    }
-
-
-def _compute_eye_delta(baseline_eye: dict, current_eye: dict) -> dict:
-    """Simple delta between baseline and current eye metrics."""
-    keys = ["off_screen_pct", "blink_rate_per_min", "gaze_variance",
-            "gaze_left_pct", "gaze_right_pct"]
-    return {
-        f"delta_{k}": round(float(current_eye.get(k, 0)) - float(baseline_eye.get(k, 0)), 4)
-        for k in keys
     }
 
 
@@ -341,86 +256,6 @@ def _compute_live_verdict(similarity: float) -> str:
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "SafeInterview v2", "version": "2.0.0"}
-
-
-# ---------------------------------------------------------------------------
-# WebRTC Signaling — /ws/room/{session_id}?role=hr|candidate
-# ---------------------------------------------------------------------------
-
-from fastapi import WebSocket, WebSocketDisconnect
-
-@app.websocket("/ws/room/{session_id}")
-async def video_room_signaling(ws: WebSocket, session_id: str, role: str = "candidate"):
-    """
-    WebRTC signaling relay for 1-on-1 video interview rooms.
-    Relays: SDP offer/answer, ICE candidates, chat messages, peer join/leave.
-    """
-    await ws.accept()
-
-    # Register this peer in the room
-    if session_id not in _video_rooms:
-        _video_rooms[session_id] = {}
-    _video_rooms[session_id][role] = ws
-    other = "hr" if role == "candidate" else "candidate"
-
-    logger.info("[VideoRoom] %s joined room %s", role, session_id)
-
-    try:
-        # If the other peer is already waiting, notify BOTH sides
-        if other in _video_rooms.get(session_id, {}):
-            # Tell the already-waiting peer that this new peer joined
-            try:
-                await _video_rooms[session_id][other].send_json({
-                    "type": "peer-joined",
-                    "role": role,
-                })
-            except Exception:
-                pass
-            # CRITICAL FIX: Also tell the NEW joiner that the other peer is already present
-            # Without this, if HR joins after candidate, HR never knows candidate is waiting
-            try:
-                await ws.send_json({
-                    "type": "peer-joined",
-                    "role": other,
-                })
-            except Exception:
-                pass
-
-        # Relay loop
-        while True:
-            try:
-                msg = await ws.receive_json()
-            except Exception:
-                break
-
-            # Pass offer / answer / ice-candidate / chat directly to the other peer
-            if other in _video_rooms.get(session_id, {}):
-                try:
-                    await _video_rooms[session_id][other].send_json(msg)
-                except Exception:
-                    pass
-
-    except WebSocketDisconnect:
-        pass
-    finally:
-        # Clean up this peer from the room
-        if session_id in _video_rooms and role in _video_rooms[session_id]:
-            del _video_rooms[session_id][role]
-        if session_id in _video_rooms and not _video_rooms[session_id]:
-            del _video_rooms[session_id]
-
-        # Notify the other peer that this one left
-        if session_id in _video_rooms and other in _video_rooms[session_id]:
-            try:
-                await _video_rooms[session_id][other].send_json({
-                    "type": "peer-left",
-                    "role": role,
-                })
-            except Exception:
-                pass
-
-        logger.info("[VideoRoom] %s left room %s", role, session_id)
-
 
 
 # ── HR Session Management ─────────────────────────────────────────────────
@@ -596,28 +431,6 @@ async def capture_baseline(payload: BaselineRequest):
     )
 
 
-@app.post("/baseline/eye")
-async def capture_eye_baseline(session_id: str, eye_data: dict):
-    """Store eye tracking baseline metrics from the intro phase."""
-    _eye_baseline_store[session_id] = eye_data
-    return {"status": "eye_baseline_stored"}
-
-
-@app.post("/upload-video")
-async def upload_video(file: UploadFile = File(...)):
-    """Accept a screen recording webm/mp4 and save (flagged sessions only)."""
-    if file.content_type and not file.content_type.startswith("video/"):
-        raise HTTPException(status_code=400, detail="Must be a video file")
-
-    ext = ".webm" if "webm" in (file.content_type or "") else ".mp4"
-    filename = f"screen_{uuid.uuid4().hex[:8]}{ext}"
-    filepath = os.path.join("uploads", filename)
-
-    with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    return {"url": f"/uploads/{filename}"}
-
 
 # ---------------------------------------------------------------------------
 # WebSocket — Real-time streaming
@@ -649,7 +462,6 @@ async def websocket_endpoint(websocket: WebSocket):
     last_transcript= ""
     session_events = []
     session_id     = ""
-    eye_metrics_accumulator: list[dict] = []
 
     try:
         while True:
@@ -675,13 +487,33 @@ async def websocket_endpoint(websocket: WebSocket):
                         sim_result = await loop.run_in_executor(
                             None, compute_similarity, transcript
                         )
-                        similarity = sim_result["semantic_similarity"]
+                        from behavior import analyze_behavior
+                        from linguistics import extract_linguistic_features
+                        from baseline import compute_baseline_delta, BaselineProfile
+                        from embeddings import _get_model as get_embed_model
+
+                        behavior_result = await loop.run_in_executor(
+                            None, analyze_behavior, transcript, stt_result.get("duration", 30.0), stt_result.get("segments"), None, bytes(audio_buffer)
+                        )
+                        embed_model = await loop.run_in_executor(None, get_embed_model)
+                        linguistic_features = await loop.run_in_executor(
+                            None, extract_linguistic_features, transcript, embed_model
+                        )
+                        
+                        live_baseline_delta = {}
+                        if session_id and session_id in _baseline_store:
+                            bp = BaselineProfile(**_baseline_store[session_id])
+                            delta_obj = compute_baseline_delta(bp, linguistic_features, behavior_result)
+                            import dataclasses
+                            live_baseline_delta = dataclasses.asdict(delta_obj)
+
                         await websocket.send_json({
                             "type":               "transcript",
                             "transcript":          transcript,
                             "semantic_similarity": similarity,
                             "verdict":             _compute_live_verdict(similarity),
                             "chunk_index":         chunk_index,
+                            "baseline_delta":      live_baseline_delta,
                         })
                     else:
                         await websocket.send_json({"type": "heartbeat", "chunk_index": chunk_index})
@@ -696,13 +528,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     logger.info("DONE signal — running full analysis.")
                     if audio_buffer:
                         try:
-                            # Merge accumulated eye frames into a single summary
-                            merged_eye = _merge_eye_frames(eye_metrics_accumulator)
                             result = await _full_analysis(
                                 bytes(audio_buffer),
                                 events=session_events,
                                 session_id=session_id,
-                                eye_metrics_raw=merged_eye,
                             )
                             await websocket.send_json({"type": "final", **result})
                         except Exception as e:
@@ -715,12 +544,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         msg_type = data.get("type")
                         if msg_type == "integrity_event":
                             session_events.append(data)
-                        elif msg_type == "eye_metrics":
-                            # Accumulate eye frame summaries (NOT raw frames)
-                            eye_metrics_accumulator.append(data)
-                        elif msg_type == "eye_baseline":
-                            if session_id:
-                                _eye_baseline_store[session_id] = data
                         elif msg_type == "session_start":
                             session_id = data.get("session_id", "")
                             logger.info("Session identified: %s", session_id)
@@ -736,99 +559,13 @@ async def websocket_endpoint(websocket: WebSocket):
         except Exception:
             pass
     finally:
-        logger.info("WebSocket closed. Chunks: %d", chunk_index)
 
-
-def _merge_eye_frames(frames: list[dict]) -> dict | None:
-    """Average accumulated eye metric frames into a single summary dict."""
-    if not frames:
-        return None
-    keys = [
-        "gaze_left_pct", "gaze_right_pct", "gaze_up_pct", "gaze_center_pct",
-        "off_screen_pct", "avg_fixation_duration_ms", "blink_rate_per_min",
-        "gaze_variance", "head_yaw_std", "head_pitch_std",
-    ]
-    merged = {}
-    for k in keys:
-        vals = [float(f.get(k, 0)) for f in frames if k in f]
-        merged[k] = sum(vals) / len(vals) if vals else 0.0
-    merged["sample_count"] = sum(int(f.get("sample_count", 1)) for f in frames)
-    return merged
-
-
-# ---------------------------------------------------------------------------
-# Resume verification endpoints (unchanged from v1)
-# ---------------------------------------------------------------------------
-
-@app.post("/upload-resume", response_model=ResumeUploadResponse)
-async def upload_resume(file: UploadFile = File(...)):
-    from resume_verify import parse_resume_to_text, generate_questions
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF resumes are supported.")
-    try:
-        content = await file.read()
-        resume_text = await parse_resume_to_text(content)
-        questions   = await generate_questions(resume_text)
-        return ResumeUploadResponse(resume_text=resume_text, questions=questions)
-    except Exception as e:
-        logger.error("Failed to process resume: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/verify-resume-answer", response_model=ResumeVerifyResponse)
-async def verify_resume_answer(payload: ResumeVerifyRequest):
-    from stt import transcribe_bytes
-    from resume_verify import evaluate_resume_answer
-    import base64
-    try:
-        raw = payload.audio_base64
-        if "," in raw:
-            raw = raw.split(",")[1]
-        audio_bytes = base64.b64decode(raw)
-        loop = asyncio.get_event_loop()
-        stt_result = await loop.run_in_executor(None, transcribe_bytes, audio_bytes)
-        transcript = stt_result.get("transcript", "")
-        if not transcript.strip():
-            return ResumeVerifyResponse(
-                transcript="",
-                legitimacy_score=0.0,
-                verdict="Fake/Exaggerated",
-                explanation="No recognisable speech detected. Could not verify claims.",
-            )
-        evaluation = await evaluate_resume_answer(transcript, payload.question, payload.resume_text)
-        return ResumeVerifyResponse(
-            transcript=       transcript,
-            legitimacy_score= evaluation["legitimacy_score"],
-            verdict=          evaluation["verdict"],
-            explanation=      evaluation["explanation"],
-        )
-    except Exception as e:
-        logger.error("Failed to verify resume answer: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
 # Static file serving + SPA catch-all (public / production mode)
 # ---------------------------------------------------------------------------
 
-@app.get("/{full_path:path}", include_in_schema=False)
-async def spa_catch_all(full_path: str):
-    """
-    1. If dist/full_path exists as a real file → serve it (JS, CSS, images).
-    2. Otherwise → serve dist/index.html for SPA client-side routing.
-    3. If dist doesn't exist at all → 404 (dev mode uses Vite directly).
-    """
-    dist = os.path.normpath(_dist)
-    index_html = os.path.join(dist, "index.html")
-
-    if not os.path.isfile(index_html):
-        raise HTTPException(status_code=404, detail="Frontend not built. Run: npm run build")
-
-    # Try exact file match first (assets, favicon, etc.)
-    candidate = os.path.normpath(os.path.join(dist, full_path))
-    # Security: make sure we don't escape dist/
-    if candidate.startswith(dist) and os.path.isfile(candidate):
-        return FileResponse(candidate)
-
-    # SPA fallback — let React Router handle the route
-    return FileResponse(index_html, media_type="text/html")
+@app.get("/", include_in_schema=False)
+async def api_root():
+    return {"status": "ok", "message": "SafeInterview API is running. Point your frontend to this URL."}

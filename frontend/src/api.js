@@ -7,22 +7,7 @@ const api = axios.create({
     timeout: 600000, // 10 minutes
 });
 
-/**
- * Upload an audio file for full analysis.
- * @param {File} audioFile
- * @param {number} durationSeconds
- * @returns {Promise<AnalysisResult>}
- */
-export async function analyzeAudio(audioFile, durationSeconds = 0) {
-    const form = new FormData();
-    form.append("file", audioFile);
-    form.append("duration", String(durationSeconds));
 
-    const response = await api.post("/analyze", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-}
 
 /**
  * Health check
@@ -37,9 +22,13 @@ export async function healthCheck() {
  * @returns {WebSocket}
  */
 export function createWebSocket() {
-    let wsUrl = "";
-    if (import.meta.env.VITE_BACKEND_URL) {
-        wsUrl = import.meta.env.VITE_BACKEND_URL.replace(/^http/, "ws");
+    // If VITE_BACKEND_URL is set (e.g. https://api.example.com), use it.
+    // Otherwise fall back to current window location (for local dev or if hosted together).
+    let backendBase = import.meta.env.VITE_BACKEND_URL;
+    
+    if (backendBase) {
+        // Ensure https -> wss transformation
+        const wsUrl = backendBase.replace(/^http/, "ws");
         return new WebSocket(`${wsUrl}/ws`);
     } else {
         const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -48,45 +37,3 @@ export function createWebSocket() {
     }
 }
 
-/**
- * Upload screen recording video.
- * @param {Blob} videoBlob
- * @returns {Promise<string>}
- */
-export async function uploadVideo(videoBlob) {
-    const form = new FormData();
-    form.append("file", videoBlob, "screen_recording.webm");
-
-    const response = await api.post("/upload-video", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-}
-
-/**
- * Upload a resume PDF and get analysis + questions.
- * @param {File} resumeFile
- */
-export async function uploadResume(resumeFile) {
-    const form = new FormData();
-    form.append("file", resumeFile);
-    const response = await api.post("/upload-resume", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-}
-
-/**
- * Verify a resume answer via audio base64.
- * @param {string} audioBase64
- * @param {string} question
- * @param {string} resumeText
- */
-export async function verifyResumeAnswer(audioBase64, question, resumeText) {
-    const response = await api.post("/verify-resume-answer", {
-        audio_base64: audioBase64,
-        question: question,
-        resume_text: resumeText,
-    });
-    return response.data;
-}
