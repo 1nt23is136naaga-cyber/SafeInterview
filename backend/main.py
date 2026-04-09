@@ -55,24 +55,37 @@ _video_rooms: dict[str, dict[str, "WebSocket"]] = {}
 # ── Persistent session storage ───────────────────────────────────────────
 SESSIONS_FILE = os.path.join(os.path.dirname(__file__), "sessions.json")
 
-def _load_sessions():
-    """Load persisted sessions from disk into memory."""
-    global _hr_sessions
-    if os.path.exists(SESSIONS_FILE):
-        try:
-            with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
-                _hr_sessions = json.load(f)
-            logger.info("Loaded %d persisted sessions from disk.", len(_hr_sessions))
-        except Exception as e:
-            logger.warning("Could not load sessions.json: %s", e)
+from supabase_client import save_session_db, load_sessions_db
 
-def _save_sessions():
-    """Persist current sessions to disk."""
+async def _load_sessions_async():
+    """Load persisted sessions from Supabase into memory."""
+    global _hr_sessions
+    db_sessions = await load_sessions_db()
+    if db_sessions:
+        _hr_sessions.update(db_sessions)
+        logger.info("Loaded %d sessions from Supabase.", len(db_sessions))
+    else:
+        # Fallback to local file if it exists and DB failed/is empty
+        if os.path.exists(SESSIONS_FILE):
+            try:
+                with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+                    local_data = json.load(f)
+                    _hr_sessions.update(local_data)
+                logger.info("Loaded %d sessions from local sessions.json fallback.", len(local_data))
+            except Exception as e:
+                logger.warning("Could not load local fallback: %s", e)
+
+async def _save_session_async(session_id: str):
+    """Persist a single session to Supabase."""
+    if session_id in _hr_sessions:
+        await save_session_db(session_id, _hr_sessions[session_id])
+    
+    # Also keep local backup for safety
     try:
         with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
             json.dump(_hr_sessions, f, indent=2, default=str)
-    except Exception as e:
-        logger.warning("Could not save sessions.json: %s", e)
+    except Exception:
+        pass
 
 
 
@@ -83,7 +96,7 @@ def _save_sessions():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load persisted sessions before warming models
-    _load_sessions()
+    await _load_sessions_async()
     logger.info("Warming up models…")
     loop = asyncio.get_event_loop()
     await asyncio.gather(
@@ -283,7 +296,7 @@ async def create_session(payload: CreateSessionRequest):
     }
     _hr_sessions[sid] = session_data
     logger.info("Session created: %s for %s", sid, payload.candidate_name)
-    _save_sessions()  # Persist immediately
+    await _save_session_async(sid)  # Persist immediately to Supabase
     return session_data
 
 
@@ -325,7 +338,7 @@ async def update_session_result(session_id: str, result: dict):
         "result":      result,
         "completed_at":__import__("datetime").datetime.utcnow().isoformat(),
     })
-    _save_sessions()  # Persist immediately
+    await _save_session_async(session_id)  # Persist immediately to Supabase
     return {"status": "updated"}
 
 
