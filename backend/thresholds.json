@@ -1,0 +1,7 @@
+{
+  "low_max": 30,
+  "medium_max": 65,
+  "last_updated": "2026-04-11T00:00:00Z",
+  "version": 1,
+  "description": "Risk level thresholds: 0–low_max=LOW, low_max–medium_max=MEDIUM, medium_max–100=HIGH"
+}

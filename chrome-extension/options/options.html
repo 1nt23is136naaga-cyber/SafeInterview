@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AntiGravity — Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <div>
+          <div class="logo-name">AntiGravity</div>
+          <div class="logo-sub">Interview Integrity Analyzer</div>
+        </div>
+      </div>
+      <span class="version-badge">v1.0.0</span>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <h2 class="card-title">🔗 Backend Configuration</h2>
+        <p class="card-desc">
+          Configure the URL of your FastAPI backend that processes audio and generates analysis results.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="backend-url">Backend URL</label>
+          <div class="input-row">
+            <input
+              type="url"
+              id="backend-url"
+              class="form-input"
+              placeholder="http://localhost:8000"
+              spellcheck="false"
+            />
+            <button id="test-btn" class="btn btn-secondary">Test</button>
+          </div>
+          <p class="form-hint">
+            For local development: <code>http://localhost:8000</code><br />
+            For Render deployment: <code>https://your-app.onrender.com</code>
+          </p>
+        </div>
+
+        <div id="test-result" class="test-result hidden"></div>
+
+        <div class="button-row">
+          <button id="save-btn" class="btn btn-primary">Save Settings</button>
+          <button id="reset-btn" class="btn btn-ghost">Reset to Default</button>
+        </div>
+
+        <div id="save-status" class="save-status hidden"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">📋 Quick Endpoints</h2>
+        <div class="endpoint-list" id="endpoint-list">
+          <div class="endpoint-row">
+            <span class="ep-method get">GET</span>
+            <span class="ep-path">/health</span>
+            <span class="ep-desc">Health check</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="ep-method post">POST</span>
+            <span class="ep-path">/sessions/create</span>
+            <span class="ep-desc">Start interview session</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="ep-method post">POST</span>
+            <span class="ep-path">/baseline</span>
+            <span class="ep-desc">Submit baseline audio</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="ep-method ws">WS</span>
+            <span class="ep-path">/ws</span>
+            <span class="ep-desc">Real-time audio stream</span>
+          </div>
+          <div class="endpoint-row">
+            <span class="ep-method post">POST</span>
+            <span class="ep-path">/sessions/{id}/finalize</span>
+            <span class="ep-desc">Generate final report</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">ℹ️ About</h2>
+        <p class="card-desc">
+          AntiGravity analyses interview integrity by combining speech pattern analysis,
+          semantic similarity detection, and behavioural monitoring. All analysis is
+          performed by your backend — this extension is the capture and display layer.
+        </p>
+        <div class="ethics-notice">
+          <strong>⚖️ Ethics:</strong> Analysis focuses on behavioural patterns, not accent,
+          language, or demographics. Candidate consent must be obtained before use.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
