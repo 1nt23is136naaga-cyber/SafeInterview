@@ -16,3 +16,5 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
+      - key: WHISPER_MODEL
+        value: "whisper-1"

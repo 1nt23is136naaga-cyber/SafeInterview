@@ -25,6 +25,7 @@ import shutil
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import asdict
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect, Request
@@ -118,8 +119,10 @@ async def lifespan(app: FastAPI):
 
 
 def _warm_stt():
-    from stt import _get_model as get_whisper
-    get_whisper()
+    """Validate OpenAI client is configured on startup (no local model to load)."""
+    from stt import _get_client
+    _get_client()
+    logger.info("OpenAI Whisper API client ready.")
 
 
 def _warm_embeddings():
@@ -281,6 +284,135 @@ def _compute_live_verdict(similarity: float) -> str:
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "SafeInterview v2", "version": "2.0.0"}
+
+
+# ── Transcription endpoint ────────────────────────────────────────────────────
+
+ALLOWED_AUDIO_TYPES = {
+    "audio/wav", "audio/wave", "audio/x-wav",
+    "audio/mpeg", "audio/mp3",
+    "audio/mp4", "audio/m4a", "audio/x-m4a",
+    "audio/webm",
+    "audio/ogg",
+    "audio/flac",
+    "application/octet-stream",   # catch-all for unnamed uploads
+}
+
+ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".mp4", ".webm", ".ogg", ".flac", ".webm"}
+
+
+@app.post("/transcribe")
+async def transcribe_audio(
+    audio: UploadFile = File(...),
+    language: str = Form(default=None),
+):
+    """
+    POST /transcribe
+    ----------------
+    Accept an audio file and return a clean transcription via OpenAI Whisper API.
+
+    Form fields:
+        audio    (required) — audio file (.wav, .mp3, .m4a, .webm, etc.)
+        language (optional) — ISO 639-1 language code, e.g. 'en'. Auto-detected if omitted.
+
+    Response:
+        {
+            "transcript":  str,          # clean text (fillers removed)
+            "language":    str,          # detected/specified language code
+            "duration":    float,        # audio length in seconds
+            "confidence":  float | null, # 0.0–1.0 (derived from Whisper log-probs)
+            "timestamps":  [             # per-segment timestamps
+                {"start": 0.0, "end": 2.5, "text": "..."},
+                ...
+            ]
+        }
+
+    Errors:
+        400 — No audio content or unsupported format
+        413 — File too large (limit 24 MB per chunk; chunked automatically)
+        422 — Transcription returned empty result
+        502 — OpenAI API error
+    """
+    from stt import transcribe_upload
+
+    # ── Validate file ──────────────────────────────────────────────────────────
+    if not audio or not audio.filename:
+        raise HTTPException(status_code=400, detail="No audio file provided.")
+
+    ext = Path(audio.filename).suffix.lower()
+    content_type = (audio.content_type or "").split(";")[0].strip().lower()
+
+    if ext not in ALLOWED_EXTENSIONS and content_type not in ALLOWED_AUDIO_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported audio format '{ext or content_type}'. "
+                   f"Accepted: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+
+    # ── Read bytes ─────────────────────────────────────────────────────────────
+    try:
+        audio_bytes = await audio.read()
+    except Exception as exc:
+        logger.error("Failed to read uploaded audio: %s", exc)
+        raise HTTPException(status_code=400, detail="Could not read uploaded file.")
+
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded audio file is empty.")
+
+    logger.info(
+        "POST /transcribe — file=%s size=%d bytes content_type=%s",
+        audio.filename, len(audio_bytes), content_type,
+    )
+
+    # ── Transcribe ─────────────────────────────────────────────────────────────
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(
+            None,
+            transcribe_upload,
+            audio_bytes,
+            audio.filename,
+            language or None,
+        )
+    except RuntimeError as exc:
+        # Configuration error (missing API key)
+        logger.error("STT config error: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception as exc:
+        logger.exception("OpenAI Whisper API error: %s", exc)
+        error_msg = str(exc)
+        # Surface meaningful OpenAI error messages
+        if "invalid_api_key" in error_msg or "Incorrect API key" in error_msg:
+            raise HTTPException(
+                status_code=502,
+                detail="Invalid OpenAI API key. Check OPENAI_API_KEY in .env.",
+            )
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            raise HTTPException(
+                status_code=502,
+                detail="OpenAI quota exceeded. Check your billing at platform.openai.com.",
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Transcription failed: {error_msg}",
+        )
+
+    # ── Validate output ────────────────────────────────────────────────────────
+    if not result.get("transcript", "").strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Transcription returned empty text. "
+                   "Check audio quality or try a different file.",
+        )
+
+    # ── Return standardised response ───────────────────────────────────────────
+    return {
+        "transcript": result["transcript"],
+        "language":   result.get("language", "en"),
+        "duration":   result.get("duration", 0.0),
+        "confidence": result.get("confidence"),
+        "timestamps": result.get("timestamps", []),
+    }
 
 
 # ── HR Session Management ─────────────────────────────────────────────────
