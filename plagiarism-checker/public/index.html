@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeInterview — Plagiarism Checker</title>
+  <meta name="description" content="Real-time text plagiarism detection for SafeInterview powered by Copyleaks AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a12;
+      --bg-card:     #12121e;
+      --bg-input:    #0f0f1c;
+      --border:      rgba(255,255,255,0.07);
+      --border-glow: rgba(99,102,241,0.35);
+      --accent:      #6366f1;
+      --accent-2:    #8b5cf6;
+      --text:        #e2e2f0;
+      --text-muted:  #6b6b8a;
+      --green:       #10b981;
+      --yellow:      #f59e0b;
+      --red:         #ef4444;
+      --radius:      16px;
+      --shadow:      0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 64px;
+    }
+
+    /* ── Background orbs ──────────────────────────────────────────────────── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -200px; }
+    .orb-2 { width: 500px; height: 500px; background: var(--accent-2); bottom: -150px; right: -150px; }
+
+    /* ── Layout ───────────────────────────────────────────────────────────── */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a5b4fc;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    h1 {
+      font-size: clamp(26px, 5vw, 40px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.65) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 400;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Card ─────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+
+    /* ── Textarea ─────────────────────────────────────────────────────────── */
+    .textarea-wrap { position: relative; }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 16px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+
+    .char-count {
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .char-count.warn { color: var(--yellow); }
+    .char-count.limit { color: var(--red); }
+
+    /* ── Button ───────────────────────────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      transition: all 0.2s;
+    }
+
+    #checkBtn {
+      flex: 1;
+      min-width: 180px;
+      padding: 14px 24px;
+      font-size: 15px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    #checkBtn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(99,102,241,0.5);
+    }
+
+    #checkBtn:active:not(:disabled) { transform: translateY(0); }
+
+    #checkBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #clearBtn {
+      padding: 14px 20px;
+      font-size: 14px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    #clearBtn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* ── Spinner ──────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .spinner.show { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status banner ────────────────────────────────────────────────────── */
+    #statusBanner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 16px;
+      border: 1px solid transparent;
+    }
+
+    #statusBanner.show { display: flex; }
+
+    #statusBanner.info    { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.2); color: #a5b4fc; }
+    #statusBanner.success { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); color: #6ee7b7; }
+    #statusBanner.error   { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.2);  color: #fca5a5; }
+    #statusBanner.warning { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); color: #fcd34d; }
+
+    /* ── Result card ──────────────────────────────────────────────────────── */
+    #resultCard {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #resultCard.show { display: flex; }
+
+    /* Score meter */
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .score-circle {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      flex-shrink: 0;
+    }
+
+    .score-circle svg {
+      transform: rotate(-90deg);
+      width: 110px; height: 110px;
+    }
+
+    .score-circle .track {
+      fill: none;
+      stroke: rgba(255,255,255,0.06);
+      stroke-width: 8;
+    }
+
+    .score-circle .indicator {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283; /* 2π × 45 */
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  stroke 0.5s ease;
+    }
+
+    .score-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-number {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-pct {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .score-info { flex: 1; min-width: 180px; }
+
+    .verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .verdict-badge.original  { background: rgba(16,185,129,0.15);  color: var(--green);  border: 1px solid rgba(16,185,129,0.25); }
+    .verdict-badge.suspicious{ background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+    .verdict-badge.copied    { background: rgba(239,68,68,0.15);   color: var(--red);    border: 1px solid rgba(239,68,68,0.25); }
+
+    .verdict-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Progress bar */
+    .progress-bar-wrap {
+      width: 100%;
+    }
+
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s;
+      width: 0%;
+    }
+
+    /* Breakdown grid */
+    .breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+    }
+
+    .breakdown-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .breakdown-item .bi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .breakdown-item .bi-val {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* Tips */
+    .tips { display: flex; flex-direction: column; gap: 8px; }
+
+    .tip-item {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      border: 1px solid;
+    }
+
+    .tip-item.original  { background: rgba(16,185,129,0.06);  border-color: rgba(16,185,129,0.15);  color: #a7f3d0; }
+    .tip-item.suspicious{ background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.15); color: #fde68a; }
+    .tip-item.copied    { background: rgba(239,68,68,0.06);   border-color: rgba(239,68,68,0.15);   color: #fecaca; }
+
+    /* ── Demo notice ──────────────────────────────────────────────────────── */
+    #demoNotice {
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #fcd34d;
+      line-height: 1.6;
+      display: none;
+    }
+
+    #demoNotice.show { display: block; }
+
+    #demoNotice strong { color: #fbbf24; }
+
+    /* ── Footer ───────────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ───────────────────────────────────────────────────────── */
+    @media (max-width: 540px) {
+      .card { padding: 20px; }
+      .score-row { flex-direction: column; align-items: flex-start; }
+      .score-circle { width: 90px; height: 90px; }
+      .score-circle svg { width: 90px; height: 90px; }
+      .score-number { font-size: 22px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="badge"><span class="badge-dot"></span>SafeInterview</div>
+      <h1>Plagiarism Checker</h1>
+      <p class="subtitle">Paste a candidate's interview answer below. We'll check it against billions of web pages using Copyleaks AI.</p>
+    </header>
+
+    <!-- Input card -->
+    <div class="card">
+      <p class="card-title">Paste Answer Text</p>
+
+      <div class="textarea-wrap">
+        <textarea
+          id="textInput"
+          placeholder="Paste the candidate's answer here (minimum 30 characters)…
+
+Example: 'A binary search tree is a data structure in which each node has at most two children, referred to as the left child and the right child. For each node, all elements in the left subtree are less than the node, and all elements in the right subtree are greater.'"
+          maxlength="25000"
+          spellcheck="false"
+        ></textarea>
+        <span class="char-count" id="charCount">0 / 25,000</span>
+      </div>
+
+      <div class="btn-row">
+        <button id="checkBtn">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="btnLabel">Check Plagiarism</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+
+        <button id="clearBtn">Clear</button>
+      </div>
+
+      <!-- Status -->
+      <div id="statusBanner">
+        <span id="statusIcon">ℹ️</span>
+        <span id="statusText"></span>
+      </div>
+    </div>
+
+    <!-- Demo notice -->
+    <div id="demoNotice">
+      <strong>⚠️ Demo Mode Active</strong> — No Copyleaks API key was detected on the server. The score shown is a <strong>local heuristic estimate</strong>, not a real plagiarism check. Add your <code>COPYLEAKS_EMAIL</code> and <code>COPYLEAKS_API_KEY</code> to <code>plagiarism-checker/.env</code> for live results.
+    </div>
+
+    <!-- Result card -->
+    <div class="card" id="resultCard">
+      <p class="card-title">Analysis Result</p>
+
+      <!-- Score + verdict -->
+      <div class="score-row">
+        <div class="score-circle">
+          <svg viewBox="0 0 110 110">
+            <circle class="track"    cx="55" cy="55" r="45"/>
+            <circle class="indicator" cx="55" cy="55" r="45" id="arcIndicator"/>
+          </svg>
+          <div class="score-label">
+            <span class="score-number" id="scoreNumber">0</span>
+            <span class="score-pct">% match</span>
+          </div>
+        </div>
+
+        <div class="score-info">
+          <div class="verdict-badge" id="verdictBadge">
+            <span id="verdictIcon">●</span>
+            <span id="verdictText">—</span>
+          </div>
+          <p class="verdict-desc" id="verdictDesc">—</p>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-bar-wrap" style="margin-top:8px">
+        <div class="progress-bar-label">
+          <span>Originality</span>
+          <span id="progressLabel">—</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Breakdown grid (shown only in real API mode) -->
+      <div class="breakdown" id="breakdownGrid" style="display:none; margin-top:4px">
+        <div class="breakdown-item">
+          <div class="bi-label">Identical</div>
+          <div class="bi-val" id="bdIdentical" style="color:var(--red)">—</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="bi-label">Minor Changes</div>
+          <div class="bi-val" id="bdMinor" style="color:var(--yellow)">—</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="bi-label">Related</div>
+          <div class="bi-val" id="bdRelated" style="color:var(--green)">—</div>
+        </div>
+      </div>
+
+      <!-- Tips / interpretation -->
+      <div class="tips" id="tipsList"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      Powered by <a href="https://copyleaks.com" target="_blank">Copyleaks AI</a> &nbsp;·&nbsp;
+      SafeInterview Platform &nbsp;·&nbsp;
+      <span id="serverStatus">Checking server…</span>
+    </footer>
+  </div>
+
+  <script>
+    // ── Constants & state ──────────────────────────────────────────────────────
+    const API = window.location.origin; // same-origin (served by Express)
+    let pollInterval = null;
+    let currentScanId = null;
+
+    const VERDICT_CONFIG = {
+      original: {
+        icon: "✅",
+        label: "Original",
+        color: "var(--green)",
+        desc: "This text appears to be original. No significant plagiarism was detected against public sources.",
+        tips: [
+          "✅ The candidate's answer shows strong originality.",
+          "✅ Response appears personally constructed — good sign of genuine knowledge.",
+        ],
+      },
+      suspicious: {
+        icon: "⚠️",
+        label: "Suspicious",
+        color: "var(--yellow)",
+        desc: "Moderate similarity to existing content was detected. The candidate may have paraphrased or partially memorised material.",
+        tips: [
+          "⚠️ Some phrases closely match web sources. Consider a follow-up probe.",
+          "⚠️ Ask the candidate to explain a specific concept in their own words.",
+        ],
+      },
+      copied: {
+        icon: "🚨",
+        label: "Copied",
+        color: "var(--red)",
+        desc: "High similarity to existing web content. The answer likely contains directly copied or minimally paraphrased text.",
+        tips: [
+          "🚨 Critical: High match with existing sources detected.",
+          "🚨 Ask the candidate to write a fresh explanation from scratch.",
+          "🚨 Flag this session for manual HR review.",
+        ],
+      },
+    };
+
+    // ── DOM refs ───────────────────────────────────────────────────────────────
+    const textInput    = document.getElementById("textInput");
+    const charCount    = document.getElementById("charCount");
+    const checkBtn     = document.getElementById("checkBtn");
+    const btnLabel     = document.getElementById("btnLabel");
+    const spinner      = document.getElementById("spinner");
+    const clearBtn     = document.getElementById("clearBtn");
+    const statusBanner = document.getElementById("statusBanner");
+    const statusIcon   = document.getElementById("statusIcon");
+    const statusText   = document.getElementById("statusText");
+    const resultCard   = document.getElementById("resultCard");
+    const demoNotice   = document.getElementById("demoNotice");
+    const serverStatus = document.getElementById("serverStatus");
+
+    // Result elements
+    const arcIndicator  = document.getElementById("arcIndicator");
+    const scoreNumber   = document.getElementById("scoreNumber");
+    const verdictBadge  = document.getElementById("verdictBadge");
+    const verdictIcon   = document.getElementById("verdictIcon");
+    const verdictText   = document.getElementById("verdictText");
+    const verdictDesc   = document.getElementById("verdictDesc");
+    const progressFill  = document.getElementById("progressFill");
+    const progressLabel = document.getElementById("progressLabel");
+    const tipsList      = document.getElementById("tipsList");
+    const breakdownGrid = document.getElementById("breakdownGrid");
+
+    // ── Char counter ───────────────────────────────────────────────────────────
+    textInput.addEventListener("input", () => {
+      const len = textInput.value.length;
+      charCount.textContent = `${len.toLocaleString()} / 25,000`;
+      charCount.className = len > 20000 ? "char-count limit" : len > 15000 ? "char-count warn" : "char-count";
+    });
+
+    // ── Clear button ───────────────────────────────────────────────────────────
+    clearBtn.addEventListener("click", () => {
+      textInput.value = "";
+      charCount.textContent = "0 / 25,000";
+      charCount.className = "char-count";
+      hideResult();
+      hideStatus();
+      stopPolling();
+    });
+
+    // ── Server health check ────────────────────────────────────────────────────
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API}/health`);
+        const data = await res.json();
+        serverStatus.textContent = data.copyleaksConfigured
+          ? "Server online · Copyleaks connected"
+          : "Server online · Demo mode (no API key)";
+        serverStatus.style.color = data.copyleaksConfigured ? "var(--green)" : "var(--yellow)";
+      } catch {
+        serverStatus.textContent = "Server offline";
+        serverStatus.style.color = "var(--red)";
+      }
+    }
+    checkHealth();
+
+    // ── UI helpers ─────────────────────────────────────────────────────────────
+    function setStatus(msg, type = "info", icon = "ℹ️") {
+      statusBanner.className = `show ${type}`;
+      statusIcon.textContent = icon;
+      statusText.textContent = msg;
+    }
+
+    function hideStatus() {
+      statusBanner.className = "";
+      statusBanner.classList.remove("show");
+    }
+
+    function setLoading(loading) {
+      checkBtn.disabled = loading;
+      spinner.className = loading ? "spinner show" : "spinner";
+      btnLabel.textContent = loading ? "Analysing…" : "Check Plagiarism";
+    }
+
+    function hideResult() {
+      resultCard.classList.remove("show");
+      demoNotice.classList.remove("show");
+    }
+
+    function stopPolling() {
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      currentScanId = null;
+    }
+
+    // ── Render result ──────────────────────────────────────────────────────────
+    function renderResult(data, isDemo) {
+      const score   = data.score ?? 0;
+      const verdict = data.verdict ?? "original";
+      const cfg     = VERDICT_CONFIG[verdict] || VERDICT_CONFIG.original;
+
+      // Arc gauge (SVG dashoffset)
+      const circumference = 2 * Math.PI * 45; // 282.74
+      const offset = circumference - (score / 100) * circumference;
+      arcIndicator.style.strokeDashoffset = offset;
+      arcIndicator.style.stroke           = cfg.color;
+
+      // Animate number
+      animateNumber(scoreNumber, 0, score, 800);
+
+      // Verdict badge
+      verdictBadge.className = `verdict-badge ${verdict}`;
+      verdictIcon.textContent  = cfg.icon;
+      verdictText.textContent  = cfg.label;
+      verdictDesc.textContent  = cfg.desc;
+
+      // Progress bar
+      progressFill.style.width      = `${score}%`;
+      progressFill.style.background = score >= 50 ? "var(--red)" : score >= 20 ? "var(--yellow)" : "var(--green)";
+      progressLabel.textContent     = `${score}% plagiarised`;
+
+      // Tips
+      tipsList.innerHTML = cfg.tips.map(t =>
+        `<div class="tip-item ${verdict}">${t}</div>`
+      ).join("");
+
+      // Show/hide breakdown (real API only)
+      breakdownGrid.style.display = "none";
+
+      // Show
+      resultCard.classList.add("show");
+      if (isDemo) demoNotice.classList.add("show");
+
+      setLoading(false);
+    }
+
+    function animateNumber(el, from, to, duration) {
+      const start = performance.now();
+      function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(from + (to - from) * eased);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ── Polling ────────────────────────────────────────────────────────────────
+    function startPolling(scanId, isDemo) {
+      let attempts = 0;
+      const maxAttempts = 60; // 2 min max
+
+      pollInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+          stopPolling();
+          setStatus("Scan is taking too long. Copyleaks may be busy — try again shortly.", "error", "⏱️");
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const res  = await fetch(`${API}/result/${scanId}`);
+          const data = await res.json();
+
+          if (data.status === "ready") {
+            stopPolling();
+            setStatus("Analysis complete!", "success", "✅");
+            renderResult(data, isDemo);
+          } else if (data.status === "error") {
+            stopPolling();
+            setStatus(`Error: ${data.message || "Unknown error from Copyleaks."}`, "error", "❌");
+            setLoading(false);
+          } else {
+            setStatus(`Scanning… (${attempts * 2}s elapsed)`, "info", "🔍");
+          }
+        } catch {
+          // network glitch — keep polling
+        }
+      }, 2000);
+    }
+
+    // ── Main submit handler ────────────────────────────────────────────────────
+    checkBtn.addEventListener("click", async () => {
+      const text = textInput.value.trim();
+
+      if (!text) {
+        setStatus("Please paste some text before checking.", "error", "❌");
+        return;
+      }
+      if (text.length < 30) {
+        setStatus("Text is too short. Please enter at least 30 characters.", "error", "❌");
+        return;
+      }
+
+      stopPolling();
+      hideResult();
+      setLoading(true);
+      setStatus("Submitting to Copyleaks…", "info", "🔍");
+
+      try {
+        const res  = await fetch(`${API}/check-text`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ text }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setStatus(data.error || "Server error. Please try again.", "error", "❌");
+          setLoading(false);
+          return;
+        }
+
+        const { scanId, demo } = data;
+        currentScanId = scanId;
+
+        if (demo) {
+          setStatus("Demo mode: using local heuristic (no API key configured).", "warning", "⚠️");
+        } else {
+          setStatus("Scan submitted! Waiting for Copyleaks results…", "info", "⏳");
+        }
+
+        startPolling(scanId, !!demo);
+
+      } catch (err) {
+        setStatus("Could not reach the server. Is it running?", "error", "❌");
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
