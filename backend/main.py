@@ -128,11 +128,15 @@ async def _background_startup():
         logger.error("Model warmup failed: %s", e)
 
 
+_startup_task = None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _startup_task
     # Fire all slow startup work in the background so the port binds immediately.
+    # We store the task in a global variable to prevent Python from garbage-collecting it.
     # Render (and other hosts) require the port to be open within ~60 s of start.
-    asyncio.create_task(_background_startup())
+    _startup_task = asyncio.create_task(_background_startup())
     logger.info("Server live — background warmup running…")
     yield
 

@@ -475,5 +475,339 @@
     "risk_label": null,
     "final_score": 0.0,
     "result": null
+  },
+  "sess_531d506985": {
+    "session_id": "sess_531d506985",
+    "candidate_name": "Naaga Sumukh B S",
+    "role": "SDE",
+    "created_at": "2026-04-11T14:04:14.855577",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [],
+    "analysis_results": [],
+    "completed_at": "2026-04-11T14:04:56.633029"
+  },
+  "sess_e863b4519a": {
+    "session_id": "sess_e863b4519a",
+    "candidate_name": "Naaga Sumukh B S",
+    "role": "SDE",
+    "created_at": "2026-04-11T14:31:30.375986",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [
+      {
+        "type": "integrity_event",
+        "event_type": "focus_return",
+        "timestamp": "2026-04-11T14:33:22.678Z",
+        "received_at": "2026-04-11T14:33:22.684Z"
+      },
+      {
+        "type": "integrity_event",
+        "event_type": "focus_loss",
+        "timestamp": "2026-04-11T14:33:25.045Z",
+        "received_at": "2026-04-11T14:33:25.049Z"
+      },
+      {
+        "type": "integrity_event",
+        "event_type": "focus_return",
+        "timestamp": "2026-04-11T14:33:25.556Z",
+        "received_at": "2026-04-11T14:33:25.559Z"
+      },
+      {
+        "type": "integrity_event",
+        "event_type": "focus_loss",
+        "timestamp": "2026-04-11T14:33:50.446Z",
+        "received_at": "2026-04-11T14:33:50.447Z"
+      }
+    ],
+    "analysis_results": [],
+    "completed_at": "2026-04-11T14:34:44.052395"
+  },
+  "sess_9921da2349": {
+    "session_id": "sess_9921da2349",
+    "candidate_name": "Naaga Sumukh B S 3",
+    "role": "SDE",
+    "created_at": "2026-04-11T15:04:29.010330",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [],
+    "analysis_results": [],
+    "completed_at": "2026-04-11T15:07:56.164572"
+  },
+  "sess_ee535ceb4c": {
+    "session_id": "sess_ee535ceb4c",
+    "candidate_name": "Naaga Sumukh B S 3",
+    "role": "SDE",
+    "created_at": "2026-04-11T15:08:18.045808",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  },
+  "sess_015c2cc478": {
+    "session_id": "sess_015c2cc478",
+    "candidate_name": "naaga 3",
+    "role": "sde",
+    "created_at": "2026-04-11T15:09:10.328632",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [],
+    "analysis_results": [],
+    "completed_at": "2026-04-11T15:11:19.063820"
+  },
+  "sess_13ad34df36": {
+    "session_id": "sess_13ad34df36",
+    "candidate_name": "jane smith",
+    "role": "xyz",
+    "created_at": "2026-04-11T15:58:42.143074",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [],
+    "analysis_results": [],
+    "completed_at": "2026-04-11T16:01:24.960850"
+  },
+  "sess_a57dc08e77": {
+    "session_id": "sess_a57dc08e77",
+    "candidate_name": "js",
+    "role": "123456",
+    "created_at": "2026-04-11T16:14:43.193302",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  },
+  "sess_d756567481": {
+    "session_id": "sess_d756567481",
+    "candidate_name": "df",
+    "role": "ert",
+    "created_at": "2026-04-11T16:15:08.662126",
+    "status": "pending",
+    "live": false,
+    "risk_label": null,
+    "final_score": 0.0,
+    "result": null
+  },
+  "sess_f4f0712250": {
+    "session_id": "sess_f4f0712250",
+    "candidate_name": "sdfg",
+    "role": "cfg",
+    "created_at": "2026-04-12T05:00:48.789352",
+    "status": "completed",
+    "live": false,
+    "risk_label": "LOW",
+    "final_score": 0.0,
+    "result": {
+      "final_score": 0.0,
+      "risk_level": "LOW",
+      "sub_scores": {
+        "speech_shift": 0,
+        "originality": 0,
+        "behavior": 0
+      },
+      "confidence_score": 0,
+      "confidence_label": "Low",
+      "confidence_explanation": "No data available to assess confidence.",
+      "signal_strengths": {
+        "speech": "Weak",
+        "originality": "Weak",
+        "behavior": "Weak"
+      },
+      "adaptive_weights": {
+        "speech": 0.3,
+        "originality": 0.4,
+        "behavior": 0.3
+      },
+      "thresholds_used": {
+        "low_max": 30,
+        "medium_max": 65
+      },
+      "reliability_note": "This assessment is based on three independent signals (speech pattern shift, answer originality, and behavioural tracking) and should be used as decision support, not a final judgment. A high confidence score means signals agree; a low confidence score means signals conflict and manual review is recommended.",
+      "component_details": {},
+      "observations": [
+        "No analysis data available \u2014 session may have been too short."
+      ],
+      "interpretation": "Insufficient data to compute a suspicion score.",
+      "recommendation": "Unable to assess. Please ensure audio was captured during the session."
+    },
+    "integrity_events": [],
+    "analysis_results": [],
+    "completed_at": "2026-04-12T05:03:38.396593"
   }
 }
