@@ -4,7 +4,7 @@
 
 'use strict';
 
-const DEFAULT_URL = 'http://localhost:8000';
+const DEFAULT_URL = 'https://safeinterview-1.onrender.com';
 
 async function init() {
   // Load saved config

@@ -12,7 +12,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.get(['backendUrl'], (result) => {
     if (!result.backendUrl) {
-      chrome.storage.sync.set({ backendUrl: 'http://localhost:8000' });
+      chrome.storage.sync.set({ backendUrl: 'https://safeinterview-1.onrender.com' });
     }
   });
 });
@@ -24,7 +24,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== 'ag-keepalive') return;
   try {
     const { backendUrl } = await chrome.storage.sync.get(['backendUrl']);
-    await fetch(`${backendUrl || 'http://localhost:8000'}/health`, {
+    await fetch(`${backendUrl || 'https://safeinterview-1.onrender.com'}/health`, {
       signal: AbortSignal.timeout(4000),
     });
   } catch {
@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Config read
   if (message.type === 'GET_CONFIG') {
     chrome.storage.sync.get(['backendUrl'], (result) => {
-      sendResponse({ backendUrl: result.backendUrl || 'http://localhost:8000' });
+      sendResponse({ backendUrl: result.backendUrl || 'https://safeinterview-1.onrender.com' });
     });
     return true; // Keep channel open for async response
   }

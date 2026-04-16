@@ -49,7 +49,7 @@ const MAX_TIMELINE_ITEMS   = 20;
 const S = {
   // Phase
   phase:             PHASE.CONSENT,
-  backendUrl:        'http://localhost:8000',
+  backendUrl:        'https://safeinterview-1.onrender.com',
 
   // Session
   sessionId:         null,
@@ -104,7 +104,7 @@ const S = {
 async function init() {
   try {
     const cfg = await getConfig();
-    S.backendUrl = cfg.backendUrl || 'http://localhost:8000';
+    S.backendUrl = cfg.backendUrl || 'https://safeinterview-1.onrender.com';
   } catch { /* non-extension context / offline */ }
 
   window.addEventListener('message', handleParentMessage);
