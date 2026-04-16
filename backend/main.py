@@ -91,30 +91,49 @@ async def _save_session_async(session_id: str):
 
 
 # ---------------------------------------------------------------------------
-# Lifespan: warm up models on startup
+# Lifespan: bind port immediately, warm up models in background
 # ---------------------------------------------------------------------------
+
+async def _background_startup():
+    """
+    Run all slow startup tasks in the background AFTER the server is already
+    listening. This prevents Render's port-scan timeout from killing the deploy.
+    """
+    # Small delay so the server is fully ready before we stress it
+    await asyncio.sleep(2)
+    logger.info("Background startup: loading sessions & syncing model bank…")
+
+    # 1. Load persisted sessions
+    try:
+        await _load_sessions_async()
+    except Exception as e:
+        logger.error("Session load failed: %s", e)
+
+    # 2. Sync question bank from Supabase
+    try:
+        from embeddings import sync_bank_db
+        await sync_bank_db()
+    except Exception as e:
+        logger.error("Cloud bank sync failed: %s", e)
+
+    # 3. Warm up models (may download from HuggingFace — can be slow)
+    loop = asyncio.get_event_loop()
+    try:
+        await asyncio.gather(
+            loop.run_in_executor(None, _warm_stt),
+            loop.run_in_executor(None, _warm_embeddings),
+        )
+        logger.info("All models ready.")
+    except Exception as e:
+        logger.error("Model warmup failed: %s", e)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load persisted sessions before warming models
-    await _load_sessions_async()
-    
-    logger.info("Warming up models & syncing cloud bank…")
-    
-    # 1. Sync question bank from Supabase
-    from embeddings import sync_bank_db
-    try:
-        await sync_bank_db()
-    except Exception as e:
-        logger.error(f"Initial cloud bank sync failed: {e}")
-
-    # 2. Warm up other models
-    loop = asyncio.get_event_loop()
-    await asyncio.gather(
-        loop.run_in_executor(None, _warm_stt),
-        loop.run_in_executor(None, _warm_embeddings),
-    )
-    logger.info("All models ready.")
+    # Fire all slow startup work in the background so the port binds immediately.
+    # Render (and other hosts) require the port to be open within ~60 s of start.
+    asyncio.create_task(_background_startup())
+    logger.info("Server live — background warmup running…")
     yield
 
 
@@ -129,6 +148,7 @@ def _warm_embeddings():
     from embeddings import _get_model, _get_answer_embeddings
     _get_model()
     _get_answer_embeddings()
+
 
 
 # ---------------------------------------------------------------------------
